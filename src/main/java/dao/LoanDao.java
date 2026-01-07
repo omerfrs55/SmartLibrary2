@@ -1,0 +1,68 @@
+package dao;
+
+import entity.Loan;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+import util.HibernateUtil;
+import java.util.List;
+
+public class LoanDao {
+
+    public void save(Loan loan) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.persist(loan);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null)
+                transaction.rollback();
+            e.printStackTrace();
+        }
+    }
+
+    public void update(Loan loan) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            session.merge(loan);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null)
+                transaction.rollback();
+            e.printStackTrace();
+        }
+    }
+
+    public void delete(Long id) {
+        Transaction transaction = null;
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            Loan loan = session.get(Loan.class, id);
+            if (loan != null) {
+                session.remove(loan);
+            }
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null)
+                transaction.rollback();
+            e.printStackTrace();
+        }
+    }
+
+    public Loan getById(Long id) {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            return session.get(Loan.class, id);
+        }
+    }
+
+    public List<Loan> getAll() {
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            // Burada "JOIN FETCH" kullanmak performans için iyidir ancak
+            // basit ödev mantığında "from Loan" yeterlidir. Hibernate, ilişkili student ve
+            // book verilerini
+            // ihtiyaç olduğunda (getStudent() çağrıldığında) çeker (Lazy Loading).
+            return session.createQuery("from Loan", Loan.class).list();
+        }
+    }
+}

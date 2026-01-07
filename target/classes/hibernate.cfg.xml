@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+    <session-factory>
+        <property name="connection.url">jdbc:sqlite:library.db</property>
+        
+        <property name="connection.driver_class">org.sqlite.JDBC</property>
+        <property name="dialect">org.hibernate.community.dialect.SQLiteDialect</property>
+        
+        <property name="hibernate.connection.charSet">UTF-8</property>
+
+        <property name="show_sql">false</property>
+        <property name="format_sql">false</property>
+
+        <property name="hbm2ddl.auto">update</property>
+
+        <mapping class="entity.Book"/>
+        <mapping class="entity.Student"/>
+        <mapping class="entity.Loan"/>
+    </session-factory>
+</hibernate-configuration>
