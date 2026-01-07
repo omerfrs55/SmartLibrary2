@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class BookDao {
 
-    // 1. KAYDETME (Save)
+    // 1. KAYDETME
     public void save(Book book) {
         Transaction transaction = null;
         // Session'ı açıyoruz (try-with-resources kullanarak otomatik kapanmasını
@@ -35,7 +35,7 @@ public class BookDao {
         }
     }
 
-    // 2. GÜNCELLEME (Update)
+    // 2. GÜNCELLEME
     public void update(Book book) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -53,7 +53,7 @@ public class BookDao {
         }
     }
 
-    // 3. SİLME (Delete)
+    // 3. SİLME
     public void delete(Long id) {
         Transaction transaction = null;
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
@@ -88,7 +88,7 @@ public class BookDao {
     // 5. HEPSİNİ LİSTELEME (GetAll)
     public List<Book> getAll() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            // HQL (Hibernate Query Language) kullanıyoruz. SQL değil!
+            // HQL (Hibernate Query Language) kullanıyoruz.
             // "FROM Book" diyerek veritabanındaki tablodan değil, Book sınıfından
             // çekiyoruz.
             return session.createQuery("from Book", Book.class).list();

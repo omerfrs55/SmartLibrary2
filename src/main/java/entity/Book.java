@@ -1,6 +1,6 @@
 package entity;
 
-import jakarta.persistence.*; // Hibernate 6 ve sonrası için jakarta kullanılır (eskiden javax idi)
+import jakarta.persistence.*; // Hibernate 6 ve sonrası için jakarta kullanılır
 
 /*
  * Sınıf: Book
@@ -44,7 +44,7 @@ public class Book {
     // --- Enum Tanımı ---
     public enum BookStatus {
         AVAILABLE, // Müsait
-        BORROWED   // Ödünç Verilmiş
+        BORROWED // Ödünç Verilmiş
     }
 
     // --- Getter ve Setter Metotları (Veriye erişim için) ---
@@ -52,7 +52,9 @@ public class Book {
     public Long getId() {
         return id;
     }
-    // ID otomatik oluştuğu için genelde setId kullanılmaz ama Hibernate bazen ihtiyaç duyar
+
+    // ID otomatik oluştuğu için genelde setId kullanılmaz ama Hibernate bazen
+    // ihtiyaç duyar
     public void setId(Long id) {
         this.id = id;
     }

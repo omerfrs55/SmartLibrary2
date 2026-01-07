@@ -1,12 +1,8 @@
 package entity;
 
 import jakarta.persistence.*;
-import java.time.LocalDate; // Tarih işlemleri için yeni Java tarih kütüphanesi
+import java.time.LocalDate;
 
-/*
- * Sınıf: Loan
- * Amaç: Ödünç alma işlemlerini tutar. 'loans' tablosuna karşılık gelir.
- */
 @Entity
 @Table(name = "loans")
 public class Loan {
@@ -15,23 +11,19 @@ public class Loan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // --- İlişkiler ---
-
     /*
-     * ManyToOne: Çoklu Ödünç -> Tek Öğrenci.
-     * Bir ödünç işlemi sadece bir öğrenciye ait olabilir.
-     * 
-     * @JoinColumn: Veritabanında 'student_id' adında bir sütun oluşturur ve Student
-     * tablosunun ID'sini buraya yazar.
+     * Bir ödünç işlemi bir öğrenciye aittir.
      */
     @ManyToOne
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
     /*
-     * OneToOne: Bir Ödünç işlemi -> Bir Kitap.
-     * Hocanın isteği üzerine Loan -> Book ilişkisi OneToOne.
-     * Her ödünç satırı tek bir kitabı işaret eder.
+     * OneToOne
+     * Bir ödünç işlemi tek bir kitaba aittir.
+     * unique = true: Veritabanında book_id sütunu benzersiz olur.
+     * UYARI: Bu yapı nedeniyle bir kitap veritabanında "loans" tablosuna
+     * sadece 1 kere girebilir.
      */
     @OneToOne
     @JoinColumn(name = "book_id", unique = true, nullable = false)
@@ -43,7 +35,7 @@ public class Loan {
     private LocalDate borrowDate;
 
     @Column(name = "return_date")
-    private LocalDate returnDate; // Henüz teslim edilmediyse null olabilir.
+    private LocalDate returnDate;
 
     // --- Constructorlar ---
     public Loan() {
@@ -94,5 +86,10 @@ public class Loan {
 
     public void setReturnDate(LocalDate returnDate) {
         this.returnDate = returnDate;
+    }
+
+    @Override
+    public String toString() {
+        return "Loan [id=" + id + ", student=" + student.getName() + ", book=" + book.getTitle() + "]";
     }
 }

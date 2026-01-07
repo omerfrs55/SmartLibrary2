@@ -10,33 +10,44 @@ public class LoanDao {
 
     public void save(Loan loan) {
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
             session.persist(loan);
             transaction.commit();
         } catch (Exception e) {
-            if (transaction != null)
+            if (transaction != null) {
                 transaction.rollback();
+            }
+            System.err.println("LoanDao Save Hatası: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            // Session'ı en sonda biz manuel kapatıyoruz ki rollback çalışabilsin
+            session.close();
         }
     }
 
     public void update(Loan loan) {
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
             session.merge(loan);
             transaction.commit();
         } catch (Exception e) {
-            if (transaction != null)
+            if (transaction != null) {
                 transaction.rollback();
+            }
             e.printStackTrace();
+        } finally {
+            session.close();
         }
     }
 
     public void delete(Long id) {
         Transaction transaction = null;
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+        Session session = HibernateUtil.getSessionFactory().openSession();
+        try {
             transaction = session.beginTransaction();
             Loan loan = session.get(Loan.class, id);
             if (loan != null) {
@@ -44,9 +55,12 @@ public class LoanDao {
             }
             transaction.commit();
         } catch (Exception e) {
-            if (transaction != null)
+            if (transaction != null) {
                 transaction.rollback();
+            }
             e.printStackTrace();
+        } finally {
+            session.close();
         }
     }
 
@@ -58,10 +72,6 @@ public class LoanDao {
 
     public List<Loan> getAll() {
         try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            // Burada "JOIN FETCH" kullanmak performans için iyidir ancak
-            // basit ödev mantığında "from Loan" yeterlidir. Hibernate, ilişkili student ve
-            // book verilerini
-            // ihtiyaç olduğunda (getStudent() çağrıldığında) çeker (Lazy Loading).
             return session.createQuery("from Loan", Loan.class).list();
         }
     }

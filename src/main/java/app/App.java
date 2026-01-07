@@ -9,6 +9,7 @@ import entity.Loan;
 import entity.Student;
 import util.HibernateUtil;
 
+import java.time.format.DateTimeFormatter;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -17,75 +18,63 @@ import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/*
- * Sınıf: App
- * Amaç: Uygulamanın giriş noktası. Menü yönetimi ve kullanıcı etkileşimi burada yapılır.
- * Değişiklikler:
- * 1. Türkçe karakter sorunu için Scanner ve System.out UTF-8'e zorlandı.
- * 2. Log kirliliğini önlemek için Hibernate log seviyesi kapatıldı.
- */
 public class App {
 
-    // DAO nesnelerini static olarak oluşturuyoruz ki her metotta tekrar tekrar new
-    // yapmayalım.
+    // Veritabanı erişim nesneleri (Data Access Objects)
     private static final BookDao bookDao = new BookDao();
     private static final StudentDao studentDao = new StudentDao();
     private static final LoanDao loanDao = new LoanDao();
 
-    // Scanner'ı henüz başlatmıyoruz, main içinde encoding ayarından sonra
-    // başlatacağız.
+    // Kullanıcıdan veri almak için Scanner
     private static Scanner scanner;
 
     public static void main(String[] args) {
-        // --- 1. TÜRKÇE KARAKTER AYARLARI ---
-
-        // Windows CMD ekranında UTF-8 (Code Page 65001) aktif etme komutu.
-        // Bu komut çalışmazsa Windows terminali Türkçe karakterleri düzgün göstermez.
+        // UTF-8 KONSOL AYARLARI
+        // Windows CMD'de Türkçe karakterlerin (ğ, ş, i, ı) bozulmaması için kod
+        // sayfasını 65001 yapıyoruz.
         if (System.getProperty("os.name").toLowerCase().contains("windows")) {
             try {
                 new ProcessBuilder("cmd.exe", "/c", "chcp", "65001").inheritIO().start().waitFor();
             } catch (Exception e) {
-                // Hata oluşursa program patlamasın, sessizce devam etsin.
+                // Hata olursa program akışı bozulmasın diye sessiz geçiyoruz.
             }
         }
 
         try {
-            // Çıktıların (System.out) UTF-8 olmasını zorluyoruz.
+            // Java'nın çıktı (System.out) sistemini UTF-8'e zorluyoruz.
             System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8.name()));
 
-            // Girdilerin (Scanner) UTF-8 olarak okunmasını zorluyoruz.
-            // Kritik Nokta: Bunu yapmazsan senin yazdığın 'Kitap' kelimesini Java bozuk
-            // okur.
+            // Java'nın girdi (Scanner) sistemini UTF-8'e zorluyoruz.
             scanner = new Scanner(System.in, StandardCharsets.UTF_8.name());
-
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        // --- 2. LOG TEMİZLİĞİ ---
-        // Hibernate'in başlangıçtaki o kalabalık kırmızı yazılarını (INFO loglarını)
-        // kapatıyoruz.
+        // HIBERNATE LOGLARI
+        // Konsolu kirleten kırmızı Hibernate bilgilendirme yazılarını kapatıyoruz.
         Logger.getLogger("org.hibernate").setLevel(Level.OFF);
 
-        System.out.println("=========================================");
-        System.out.println("  SmartLibrary2 - Akıllı Kütüphane Sistemi");
-        System.out.println("=========================================");
-
-        // --- 3. ANA DÖNGÜ ---
+        // ANA MENÜ DÖNGÜSÜ
         while (true) {
-            System.out.println("\n--- ANA MENÜ ---");
-            System.out.println("1 - Kitap Ekle");
-            System.out.println("2 - Kitapları Listele");
-            System.out.println("3 - Öğrenci Ekle");
-            System.out.println("4 - Öğrencileri Listele");
-            System.out.println("5 - Kitap Ödünç Ver");
-            System.out.println("6 - Ödünç Listesini Görüntüle");
-            System.out.println("7 - Kitap Geri Teslim Al");
-            System.out.println("0 - Çıkış");
-            System.out.print("Seçiminiz: ");
+            System.out.println("\n\n");
+            System.out.println("#################################################");
+            System.out.println("#                Smart Library 2                #");
+            System.out.println("#################################################");
+            System.out.println("");
+            System.out.println("   [1] Yeni Kitap Kaydı Oluştur");
+            System.out.println("   [2] Kütüphane Arşivini Listele");
+            System.out.println("   ----------------------------------");
+            System.out.println("   [3] Yeni Öğrenci Kaydı Oluştur");
+            System.out.println("   [4] Kayıtlı Öğrencileri Listele");
+            System.out.println("   ----------------------------------");
+            System.out.println("   [5] Kitap Ödünç Verme (Zimmet)");
+            System.out.println("   [6] Ödünç Hareket Dökümü");
+            System.out.println("   [7] Kitap İade Alma İşlemi");
+            System.out.println("   ----------------------------------");
+            System.out.println("   [0] Kapat ve Çık");
+            System.out.println("");
+            System.out.print(">> Lütfen yapmak istediğiniz işlemi seçiniz: ");
 
-            // nextLine() kullanıyoruz çünkü next() boşluktan sonrasını almaz.
-            // trim() ile baştaki sondaki boşlukları siliyoruz.
             String choice = scanner.nextLine().trim();
 
             switch (choice) {
@@ -94,7 +83,7 @@ public class App {
                     break;
                 case "2":
                     listBooks();
-                    waitEnter(); // Kullanıcı listeyi görsün diye bekletme
+                    waitEnter();
                     break;
                 case "3":
                     addStudent();
@@ -114,89 +103,104 @@ public class App {
                     returnBook();
                     break;
                 case "0":
-                    System.out.println("Sistemden çıkılıyor...");
-                    HibernateUtil.shutdown(); // Veritabanı bağlantısını güvenli kapat
+                    System.out.println("\n>> Sistem güvenli bir şekilde kapatılıyor...");
+                    HibernateUtil.shutdown();
                     System.exit(0);
                 default:
-                    System.out.println("Hatalı seçim! Lütfen tekrar deneyin.");
+                    System.out.println(">> [HATA] Geçersiz seçim! Lütfen menüdeki numaralardan birini giriniz.");
+                    try {
+                        Thread.sleep(800);
+                    } catch (Exception e) {
+                    } // Uyarıyı okuması için kısa bekleme
             }
         }
     }
-    // --- KİTAP İŞLEMLERİ ---
+
+    // ========================================================================
+    // İŞLEM METOTLARI
+    // ========================================================================
 
     private static void addBook() {
-        System.out.println("\n--- Kitap Ekle --- (İptal için '0' yaz)");
+        System.out.println("\n>> YENİ KİTAP EKLEME EKRANI (İptal: '0')");
 
         System.out.print("Kitap Başlığı: ");
         String title = scanner.nextLine().trim();
         if (title.equals("0"))
-            return; // Kullanıcı vazgeçerse çık
+            return;
 
-        System.out.print("Yazar: ");
+        System.out.print("Yazar Adı: ");
         String author = scanner.nextLine().trim();
 
-        System.out.print("Yayın Yılı: ");
-        int year = getIntInput(); // Güvenli sayı alma metodumuz
+        int year = 0;
+        // Geçerli bir yıl girene kadar çıkış yok
+        while (true) {
+            System.out.print("Basım Yılı: ");
+            year = getIntInput();
 
-        // Yeni kitap varsayılan olarak AVAILABLE (Müsait) durumundadır
+            // Yıl 0 olamaz, 1000'den küçük olamaz (mantık kontrolü)
+            if (year > 1000 && year <= LocalDate.now().getYear()) {
+                break; // Doğru girdiyse döngüyü kır
+            }
+            System.out.println(">> [HATA] Geçersiz yıl! Lütfen mantıklı bir sayı giriniz (Örn: 2020).");
+        }
+
         Book book = new Book(title, author, year, BookStatus.AVAILABLE);
-
         bookDao.save(book);
-        System.out.println(">> Başarılı: Kitap veritabanına eklendi.");
+
+        System.out.println(">> [BAŞARILI] Kitap kütüphane arşivine eklendi.");
         waitEnter();
     }
 
     private static void listBooks() {
-        System.out.println("\n--- Kitap Listesi ---");
+        System.out.println("\n>> KÜTÜPHANE ARŞİVİ");
         List<Book> books = bookDao.getAll();
 
         if (books == null || books.isEmpty()) {
             System.out.println(">> Listelenecek kitap bulunamadı.");
         } else {
-            // Tablo başlıkları (Sola dayalı formatlama)
+            // Tablo Başlığı
             System.out.printf("%-5s %-30s %-20s %-15s\n", "ID", "BAŞLIK", "YAZAR", "DURUM");
             System.out.println("--------------------------------------------------------------------------");
 
             for (Book b : books) {
-                // Stringleri belli uzunlukta kesiyoruz ki tablo kaymasın
+                String statusTr = (b.getStatus() == BookStatus.AVAILABLE) ? "MÜSAİT" : "ÖDÜNÇTE";
+
                 System.out.printf("%-5d %-30s %-20s %-15s\n",
                         b.getId(),
                         limitString(b.getTitle(), 29),
                         limitString(b.getAuthor(), 19),
-                        b.getStatus());
+                        statusTr);
             }
         }
     }
 
-    // --- ÖĞRENCİ İŞLEMLERİ ---
-
     private static void addStudent() {
-        System.out.println("\n--- Öğrenci Ekle --- (İptal için '0' yaz)");
+        System.out.println("\n>> YENİ ÖĞRENCİ KAYDI (İptal: '0')");
 
         System.out.print("Öğrenci Adı Soyadı: ");
         String name = scanner.nextLine().trim();
         if (name.equals("0"))
             return;
 
-        System.out.print("Bölüm: ");
+        System.out.print("Bölümü: ");
         String dept = scanner.nextLine().trim();
 
         Student s = new Student(name, dept);
         studentDao.save(s);
-        System.out.println(">> Başarılı: Öğrenci kaydedildi.");
+
+        System.out.println(">> [BAŞARILI] Öğrenci sisteme kaydedildi.");
         waitEnter();
     }
 
     private static void listStudents() {
-        System.out.println("\n--- Öğrenci Listesi ---");
+        System.out.println("\n>> ÖĞRENCİ LİSTESİ");
         List<Student> students = studentDao.getAll();
 
         if (students == null || students.isEmpty()) {
-            System.out.println(">> Kayıtlı öğrenci yok.");
+            System.out.println(">> Kayıtlı öğrenci bulunamadı.");
         } else {
             System.out.printf("%-5s %-25s %-20s\n", "ID", "İSİM", "BÖLÜM");
             System.out.println("--------------------------------------------------");
-
             for (Student s : students) {
                 System.out.printf("%-5d %-25s %-20s\n",
                         s.getId(),
@@ -205,82 +209,83 @@ public class App {
             }
         }
     }
-    // --- ÖDÜNÇ VE İADE İŞLEMLERİ ---
 
-    /*
-     * Metot: borrowBook
-     * Amaç: Bir öğrenciye bir kitap ödünç vermek.
-     * Kontroller: Öğrenci var mı? Kitap var mı? Kitap zaten başkasında mı?
-     */
     private static void borrowBook() {
-        System.out.println("\n--- Kitap Ödünç Ver ---");
+        System.out.println("\n>> KİTAP ÖDÜNÇ VERME İŞLEMİ");
 
-        // 1. Adım: Öğrenci Seçimi
+        // Önce öğrencileri göster
         listStudents();
-        System.out.print("Öğrenci ID seçiniz (İptal: 0): ");
+        System.out.print("\nÖğrenci ID Seçiniz (İptal: 0): ");
         Long sId = getLongInput();
         if (sId == 0)
             return;
 
         Student student = studentDao.getById(sId);
         if (student == null) {
-            System.out.println(">> Hata: Bu ID ile kayıtlı öğrenci bulunamadı.");
+            System.out.println(">> [HATA] Belirtilen ID ile öğrenci bulunamadı.");
+            waitEnter();
             return;
         }
 
-        // 2. Adım: Kitap Seçimi
+        // Sonra kitapları göster
         listBooks();
-        System.out.print("Kitap ID seçiniz (İptal: 0): ");
+        System.out.print("\nKitap ID Seçiniz (İptal: 0): ");
         Long bId = getLongInput();
         if (bId == 0)
             return;
 
         Book book = bookDao.getById(bId);
         if (book == null) {
-            System.out.println(">> Hata: Bu ID ile kayıtlı kitap bulunamadı.");
+            System.out.println(">> [HATA] Belirtilen ID ile kitap bulunamadı.");
+            waitEnter();
             return;
         }
 
-        // 3. Adım: Durum Kontrolü (Mantıksal Koruma)
-        // Eğer kitap zaten verilmişse (BORROWED), tekrar verilemez.
+        // Kural Kontrolü: Kitap zaten başkasında mı?
         if (book.getStatus() == BookStatus.BORROWED) {
-            System.out.println(">> UYARI: Bu kitap şu an başkasında! Ödünç verilemez.");
+            System.out.println(">> [UYARI] Bu kitap zaten teslim alınmış! İşlem yapılamaz.");
+            // Kullanıcı enter'a basana kadar bekle, sonra menüye dön
+            waitEnter();
             return;
         }
+        // ---------------------------------
 
-        // 4. Adım: Tarih Belirleme ve Kayıt
-        System.out.println("Ödünç alma tarihi girilecek...");
-        LocalDate borrowDate = askForDate(); // Tarihi kullanıcıdan veya bugünden al
+        // Tarih seçimi
+        System.out.println("\n[Tarih Girişi]");
+        LocalDate borrowDate = askForDate();
 
-        Loan loan = new Loan(student, book, borrowDate);
-        loanDao.save(loan); // Ödünç kaydını oluştur
+        // Kaydetme işlemi
+        // Hata kontrolü: OneToOne olduğu için try-catch ile sarmak mantıklı olabilir
+        // ama kullanıcı arayüzünde "Zaten alınmış" kontrolü yaptığımız için patlamaması
+        // lazım.
+        try {
+            Loan loan = new Loan(student, book, borrowDate);
+            loanDao.save(loan);
 
-        // 5. Adım: Kitabın Durumunu Güncelle
-        // Kitap artık "MÜSAİT" değil, "ÖDÜNÇ VERİLDİ" olmalı.
-        book.setStatus(BookStatus.BORROWED);
-        bookDao.update(book);
+            // Kitap durumunu güncelle
+            book.setStatus(BookStatus.BORROWED);
+            bookDao.update(book);
 
-        System.out.println(">> İşlem Başarılı: Kitap öğrenciye zimmetlendi.");
+            System.out.println(">> [BAŞARILI] Kitap öğrenciye zimmetlendi.");
+        } catch (Exception e) {
+            System.out.println(">> [HATA] Veritabanı hatası: " + e.getMessage());
+        }
+
         waitEnter();
     }
 
-    /*
-     * Metot: listLoans
-     * Amaç: Sistemdeki tüm ödünç kayıtlarını listelemek.
-     */
     private static void listLoans() {
-        System.out.println("\n--- Ödünç Listesi (Hareket Dökümü) ---");
+        System.out.println("\n>> ÖDÜNÇ HAREKET DÖKÜMÜ");
         List<Loan> loans = loanDao.getAll();
 
         if (loans == null || loans.isEmpty()) {
-            System.out.println(">> Kayıtlı işlem yok.");
+            System.out.println(">> Kayıtlı işlem bulunamadı.");
         } else {
-            System.out.printf("%-5s %-20s %-25s %-15s %-15s\n", "ID", "ÖĞRENCİ", "KİTAP", "ALIŞ", "İADE");
+            System.out.printf("%-5s %-20s %-25s %-15s %-15s\n", "ID", "ÖĞRENCİ", "KİTAP", "ALIŞ TARİHİ", "İADE TARİHİ");
             System.out.println(
-                    "----------------------------------------------------------------------------------------");
+                    "-----------------------------------------------------------------------------------------");
 
             for (Loan l : loans) {
-                // Eğer iade tarihi null ise "---" yazdır, değilse tarihi yazdır.
                 String returnStr = (l.getReturnDate() == null) ? "---" : l.getReturnDate().toString();
 
                 System.out.printf("%-5d %-20s %-25s %-15s %-15s\n",
@@ -293,128 +298,145 @@ public class App {
         }
     }
 
-    /*
-     * Metot: returnBook
-     * Amaç: Ödünç verilen kitabı geri almak (İade).
-     */
     private static void returnBook() {
-        System.out.println("\n--- Kitap İade Al ---");
+        System.out.println("\n>> KİTAP İADE ALMA İŞLEMİ");
 
-        // Kullanıcıya kolaylık olsun diye önce listeyi gösterelim
+        // 1. Önce tüm kayıtları çekelim
+        List<Loan> loans = loanDao.getAll();
+
+        // 2. Dışarıda olan (henüz iade edilmemiş) kitap var mı kontrol et
+        boolean activeLoanExists = false;
+        if (loans != null) {
+            for (Loan l : loans) {
+                if (l.getReturnDate() == null) { // İade tarihi boşsa kitap hala dışarıdadır
+                    activeLoanExists = true;
+                    break;
+                }
+            }
+        }
+
+        // 3. Eğer iade edilecek aktif bir kitap yoksa uyarı ver ve çık
+        if (!activeLoanExists) {
+            System.out.println(
+                    ">> [UYARI] Teslim edilmiş kitap bulunmamakta bu nedenle iade işlemi gerçekleştirilemiyor.");
+            System.out.println(">> Lütfen önce kitap teslim alın (ödünç verin).");
+            waitEnter(); // Kullanıcı okusun diye beklet
+            return; // Ana menüye at
+        }
+
+        // Ödünçleri listele ki ID bilsin
         listLoans();
 
-        System.out.print("İade edilecek İşlem ID'si (Loan ID) girin (İptal: 0): ");
-        Long loanId = getLongInput();
-        if (loanId == 0)
+        System.out.print("\nİade edilecek İşlem ID (Loan ID) giriniz (İptal: 0): ");
+        Long id = getLongInput();
+        if (id == 0)
             return;
 
-        Loan loan = loanDao.getById(loanId);
-
-        // Hata Kontrolü: Kayıt yoksa veya zaten iade edilmişse uyar
+        Loan loan = loanDao.getById(id);
         if (loan == null) {
-            System.out.println(">> Hata: Böyle bir işlem kaydı yok.");
-            return;
-        }
-        if (loan.getReturnDate() != null) {
-            System.out.println(">> Uyarı: Bu kitap zaten iade edilmiş!");
+            System.out.println(">> [HATA] Geçersiz işlem ID.");
+            waitEnter();
             return;
         }
 
-        // İade tarihi al
-        System.out.println("İade tarihi girilecek...");
+        // İkinci kontrol: Belki eski bir ID girdi, zaten iade edilmiş mi?
+        if (loan.getReturnDate() != null) {
+            System.out.println(">> [UYARI] Bu kitap zaten iade alınmış.");
+            waitEnter();
+            return;
+        }
+
+        System.out.println("\n[İade Tarihi]");
         LocalDate returnDate = askForDate();
 
-        // Alış tarihinden önce iade edilemez mantığı (Opsiyonel ama iyi olur)
+        // Mantık kontrolü: İade, alıstan önce olamaz
         if (returnDate.isBefore(loan.getBorrowDate())) {
-            System.out.println(">> Hata: İade tarihi, alış tarihinden önce olamaz!");
+            System.out.println(">> [HATA] İade tarihi, ödünç alma tarihinden önce olamaz!");
+            waitEnter();
             return;
         }
 
-        // 1. Loan nesnesini güncelle
+        // İade işlemini tamamla
         loan.setReturnDate(returnDate);
         loanDao.update(loan);
 
-        // 2. Kitabı boşa çıkar (Status -> AVAILABLE)
+        // Kitabı boşa çıkar
         Book book = loan.getBook();
         book.setStatus(BookStatus.AVAILABLE);
         bookDao.update(book);
 
-        System.out.println(">> İşlem Başarılı: Kitap iade alındı, rafa kaldırıldı.");
+        System.out.println(">> [BAŞARILI] Kitap iade alındı ve rafa kaldırıldı.");
         waitEnter();
     }
-    // --- YARDIMCI (HELPER) METOTLAR ---
+
+    // ========================================================================
+    // YARDIMCI METOTLAR
+    // ========================================================================
 
     /*
-     * Metot: askForDate
-     * Amaç: Kullanıcıya işlemi "Bugün" mü yoksa "Geçmiş/Gelecek" bir tarihte mi
-     * yapacağını sormak.
-     * Neden: Her işlem anlık olmayabilir, geçmişe dönük kayıt girmek gerekebilir.
+     * Tarih sorma: "Bugün" seçeneği veya manuel giriş.
      */
     private static LocalDate askForDate() {
         while (true) {
             System.out.print("İşlem tarihi BUGÜN mü? (E/H): ");
-            String answer = scanner.nextLine().trim().toUpperCase();
+            String a = scanner.nextLine().trim().toUpperCase();
 
-            if (answer.startsWith("E")) {
-                return LocalDate.now(); // Bugünün tarihini döndür
-            }
-            if (answer.startsWith("H")) {
-                return getFlexibleDateInput(); // Kullanıcıdan tarih iste
-            }
-            // E veya H dışında bir şeye basarsa döngü başa döner.
+            if (a.startsWith("E"))
+                return LocalDate.now();
+            if (a.startsWith("H"))
+                return getFlexibleDateInput();
+
             System.out.println(">> Lütfen sadece 'E' (Evet) veya 'H' (Hayır) giriniz.");
         }
     }
 
     /*
-     * Metot: getFlexibleDateInput
-     * Amaç: Kullanıcıdan Yıl-Ay-Gün formatında tarih almak ve doğrulamak.
-     * Koruma: Kullanıcı "yarın", "bilmiyorum" gibi saçma şeyler yazarsa program
-     * çökmez.
+     * Tarih formatı doğrulama (YYYY-AA-GG)
      */
     private static LocalDate getFlexibleDateInput() {
-        while (true) {
-            System.out.print("Tarih giriniz (Yıl-Ay-Gün, Örn: 2023-10-25): ");
-            String input = scanner.nextLine().trim();
+        // Tek haneli girişleri kabul eden format (y-M-d)
+        // Bu format hem 2023-01-01 hem de 2023-1-1 okuyabilir.
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("y-M-d");
 
-            // Kullanıcı nokta (.) kullanırsa tireye (-) çeviriyoruz ki format bozulmasın.
-            input = input.replace(".", "-").replace("/", "-");
+        while (true) {
+            System.out.print("Tarih giriniz (Yıl-Ay-Gün): ");
+            // Nokta ve Slash işaretlerini Tireye çeviriyoruz
+            String dateStr = scanner.nextLine().trim()
+                    .replace(".", "-")
+                    .replace("/", "-");
 
             try {
-                // Java'nın yerleşik tarih çeviricisi. Format uymazsa hata fırlatır.
-                return LocalDate.parse(input);
+                // Özel formatımızla parse ediyoruz
+                return LocalDate.parse(dateStr, formatter);
             } catch (Exception e) {
-                System.out.println(">> Hatalı format! Lütfen YYYY-AA-GG formatında giriniz.");
+                System.out.println(">> [HATA] Tarih formatı geçersiz!");
+                System.out.println(">> Lütfen 'Yıl-Ay-Gün' sırasıyla girin (Örn: 2023-5-1 veya 1990-12-30).");
             }
         }
     }
 
     /*
-     * Metot: getIntInput
-     * Amaç: Güvenli tamsayı (int) girişi almak.
-     * Kritik: scanner.nextInt() kullanmak yerine string alıp parse ediyoruz.
-     * Neden: nextInt() sonrası gelen enter karakteri buffer'da kalıp sonraki soruyu
-     * atlatıyordu.
-     * Ayrıca harf girilirse programın patlamasını try-catch ile engelliyoruz.
+     * Güvenli Tam Sayı Girişi (Hata durumunda programı kırmaz)
      */
     private static int getIntInput() {
         while (true) {
             try {
                 String line = scanner.nextLine().trim();
-                // Boş enter'a basarsa 0 kabul etsin veya tekrar istesin (burada 0 dönüyoruz)
+                // Eğer boş enter'a basarsa 0 dönsün ama yukarıdaki addBook bunu kabul etmeyecek
+                // zaten.
                 if (line.isEmpty())
                     return 0;
                 return Integer.parseInt(line);
             } catch (NumberFormatException e) {
-                System.out.println(">> Hatalı giriş! Lütfen sadece SAYI giriniz.");
-                System.out.print("Tekrar deneyin: ");
+                // Hata verince satır atlamadan kullanıcıyı uyarıyoruz
+                System.out.print(">> [HATA] Harf değil SAYI girmelisiniz! Tekrar deneyin: ");
+                // Döngü başa dönecek ve scanner.nextLine() tekrar çalışacak
             }
         }
     }
 
     /*
-     * Metot: getLongInput
-     * Amaç: Güvenli uzun tamsayı (Long) girişi almak (ID'ler için).
+     * Güvenli ID Girişi (Long tipinde)
      */
     private static Long getLongInput() {
         while (true) {
@@ -424,16 +446,13 @@ public class App {
                     return 0L;
                 return Long.parseLong(line);
             } catch (NumberFormatException e) {
-                System.out.println(">> Hatalı giriş! ID sadece rakamlardan oluşmalıdır.");
-                System.out.print("ID Tekrar girin: ");
+                System.out.println(">> Hatalı giriş! ID sadece rakam olmalıdır: ");
             }
         }
     }
 
     /*
-     * Metot: waitEnter
-     * Amaç: Kullanıcı listeyi okuyabilsin diye "Devam etmek için Enter'a bas"
-     * beklemesi.
+     * Kullanıcıyı bekletme metodu
      */
     private static void waitEnter() {
         System.out.println("\nAna menüye dönmek için [ENTER] tuşuna basınız...");
@@ -441,16 +460,11 @@ public class App {
     }
 
     /*
-     * Metot: limitString
-     * Amaç: Tablo görünümünde metinlerin sütunları kaydırmaması için kırpılması.
-     * Örnek: "Harry Potter ve Felsefe Taşı" -> "Harry Potter ve..."
+     * Tablo taşmalarını önlemek için metin kısaltma metodu
      */
-    private static String limitString(String text, int maxLength) {
-        if (text == null)
+    private static String limitString(String t, int m) {
+        if (t == null)
             return "";
-        if (text.length() <= maxLength)
-            return text;
-        // Metin uzunsa, son 3 karakteri silip "..." ekle
-        return text.substring(0, maxLength - 3) + "...";
+        return (t.length() <= m) ? t : t.substring(0, m - 3) + "...";
     }
 }
