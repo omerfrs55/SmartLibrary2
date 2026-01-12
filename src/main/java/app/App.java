@@ -29,7 +29,7 @@ public class App {
     private static Scanner scanner;
 
     public static void main(String[] args) {
-        // UTF-8 KONSOL AYARLARI
+        // UTF-8 KONSOL AYARLARIMIZ
         // Windows CMD'de Türkçe karakterlerin (ğ, ş, i, ı) bozulmaması için kod
         // sayfasını 65001 yapıyoruz.
         if (System.getProperty("os.name").toLowerCase().contains("windows")) {
@@ -50,11 +50,11 @@ public class App {
             e.printStackTrace();
         }
 
-        // HIBERNATE LOGLARI
+        // HIBERNATE LOGLARIMIZ
         // Konsolu kirleten kırmızı Hibernate bilgilendirme yazılarını kapatıyoruz.
         Logger.getLogger("org.hibernate").setLevel(Level.OFF);
 
-        // ANA MENÜ DÖNGÜSÜ
+        // ANA MENÜ DÖNGÜMÜZ
         while (true) {
             System.out.println("\n\n");
             System.out.println("#################################################");
@@ -111,13 +111,13 @@ public class App {
                     try {
                         Thread.sleep(800);
                     } catch (Exception e) {
-                    } // Uyarıyı okuması için kısa bekleme
+                    } // Uyarıyı okuması için kısa bekleme işlemimiz
             }
         }
     }
 
     // ========================================================================
-    // İŞLEM METOTLARI
+    // İŞLEM METOTLARIMIZ
     // ========================================================================
 
     private static void addBook() {
@@ -139,7 +139,7 @@ public class App {
 
             // Yıl 0 olamaz, 1000'den küçük olamaz (mantık kontrolü)
             if (year > 1000 && year <= LocalDate.now().getYear()) {
-                break; // Doğru girdiyse döngüyü kır
+                break; // Doğru girdiyse döngüyü kırma işlemimiz
             }
             System.out.println(">> [HATA] Geçersiz yıl! Lütfen mantıklı bir sayı giriniz (Örn: 2020).");
         }
@@ -213,7 +213,7 @@ public class App {
     private static void borrowBook() {
         System.out.println("\n>> KİTAP ÖDÜNÇ VERME İŞLEMİ");
 
-        // Önce öğrencileri göster
+        // Önce öğrencileri gösterme
         listStudents();
         System.out.print("\nÖğrenci ID Seçiniz (İptal: 0): ");
         Long sId = getLongInput();
@@ -227,7 +227,7 @@ public class App {
             return;
         }
 
-        // Sonra kitapları göster
+        // Sonra kitapları gösterme
         listBooks();
         System.out.print("\nKitap ID Seçiniz (İptal: 0): ");
         Long bId = getLongInput();
@@ -254,15 +254,15 @@ public class App {
         System.out.println("\n[Tarih Girişi]");
         LocalDate borrowDate = askForDate();
 
-        // Kaydetme işlemi
+        // Kaydetme işlemimiz
         // Hata kontrolü: OneToOne olduğu için try-catch ile sarmak mantıklı olabilir
-        // ama kullanıcı arayüzünde "Zaten alınmış" kontrolü yaptığımız için patlamaması
+        // ama kullanıcı arayüzünde "Zaten alınmış" kontrolü yaptığım için patlamaması
         // lazım.
         try {
             Loan loan = new Loan(student, book, borrowDate);
             loanDao.save(loan);
 
-            // Kitap durumunu güncelle
+            // Kitap durumunu güncelleme işlemi
             book.setStatus(BookStatus.BORROWED);
             bookDao.update(book);
 
@@ -304,7 +304,7 @@ public class App {
         // 1. Önce tüm kayıtları çekelim
         List<Loan> loans = loanDao.getAll();
 
-        // 2. Dışarıda olan (henüz iade edilmemiş) kitap var mı kontrol et
+        // 2. Dışarıda olan (henüz iade edilmemiş) kitap var mı kontrol edelim
         boolean activeLoanExists = false;
         if (loans != null) {
             for (Loan l : loans) {
@@ -324,7 +324,7 @@ public class App {
             return; // Ana menüye at
         }
 
-        // Ödünçleri listele ki ID bilsin
+        // Ödünçleri listeliyoruz ki ID bilsin
         listLoans();
 
         System.out.print("\nİade edilecek İşlem ID (Loan ID) giriniz (İptal: 0): ");
@@ -370,7 +370,7 @@ public class App {
     }
 
     // ========================================================================
-    // YARDIMCI METOTLAR
+    // YARDIMCI METOTLARIMIZ
     // ========================================================================
 
     /*

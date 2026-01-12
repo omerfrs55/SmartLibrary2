@@ -6,7 +6,7 @@ Bu proje, Nesne Dayalı Programlama-II dersi final projesidir. Kütüphane yöne
 
 * **Ders Sorumlusu:** Emrah SARIÇİÇEK
 * **Geliştiren:** Ömer Faruk SAĞLAM
-* **Proje Adı:** SmartLibraryPlus (SmartLibrary2)
+* **Proje Adı:** SmartLibrary2 (SmartLibrary2)
 
 ---
 
